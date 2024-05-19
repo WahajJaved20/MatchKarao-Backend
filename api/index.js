@@ -20,9 +20,7 @@ const driveClientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || '';
 const driveRedirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || '';
 const driveRefreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '';
 
-app.use(cors({
-	origin: '*'
-}));
+app.use(cors());
 
 app.use(bodyParser.json());
 
