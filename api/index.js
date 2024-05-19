@@ -20,7 +20,9 @@ const driveClientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || '';
 const driveRedirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || '';
 const driveRefreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '';
 
-app.use(cors());
+app.use(cors({
+	origin: 'https://match-karao.vercel.app' 
+  }));
 
 app.use(bodyParser.json());
 
