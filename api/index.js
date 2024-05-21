@@ -44,7 +44,7 @@ app.post("/login", async (req, res) => {
 			if (result[0].teamName == teamName && result[0].password == md5Hash) {
 				const token = jwt.sign({ userId: teamName }, secretKey, { expiresIn: '1h' });
 				console.log("Returning success status")
-				res.status(200).json({ message: token, type: "Success" , teamID: result[0].teamID});
+				res.status(200).json({ message: token, type: "Success" , teamID: result[0]._id});
 				console.log("mubarak")
 			} else {
 				res.status(200).json({ message: "Invalid username or password. Please try again.", type: "Failed" })
