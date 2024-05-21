@@ -15,11 +15,6 @@ dotenv.config({ path: '../.env' });
 const app = express();
 const port = 5000;
 
-const driveClientId = process.env.GOOGLE_DRIVE_CLIENT_ID || '';
-const driveClientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || '';
-const driveRedirectUri = process.env.GOOGLE_DRIVE_REDIRECT_URI || '';
-const driveRefreshToken = process.env.GOOGLE_DRIVE_REFRESH_TOKEN || '';
-
 // app.use(cors({
 // 	origin: 'https://match-karao.vercel.app'
 // }));
@@ -49,7 +44,7 @@ app.post("/login", async (req, res) => {
 			if (result[0].teamName == teamName && result[0].password == md5Hash) {
 				const token = jwt.sign({ userId: teamName }, secretKey, { expiresIn: '1h' });
 				console.log("Returning success status")
-				res.status(200).json({ message: token, type: "Success" });
+				res.status(200).json({ message: token, type: "Success" , teamID: result[0].teamID});
 				console.log("mubarak")
 			} else {
 				res.status(200).json({ message: "Invalid username or password. Please try again.", type: "Failed" })
@@ -148,7 +143,30 @@ app.post('/addTeamMembers', async (req, res) => {
 		res.status(500).json({ message: 'Internal Server Error' });
 	}
 })
+app.post('/createNewBooking', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const {bookingType, teamID, location, date, startTime, endTime, price} = req.body;
 
+		const collection = db.collection(bookingType);
+		await collection.insertOne({
+			teamID: teamID,
+			bookingType: bookingType,
+			location: location,
+			date: date,
+			startTime: startTime,
+			endTime: endTime,
+			price: price
+		}).catch((error) => {
+			console.error(error)
+			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
+		})
+		res.status(200).json({ message: "Booking successfully Created", type: "Success"});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
 
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
