@@ -34,36 +34,6 @@ const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri);
 
-async function uploadFileToDrive(folderNamse, fileName) {
-	const googleDriveService = new GoogleDriveService(driveClientId, driveClientSecret, driveRedirectUri, driveRefreshToken);
-	const finalPath = path.resolve(__dirname, '../Frame34.svg');
-	const folderName = folderNamse;
-
-	if (!fs.existsSync(finalPath)) {
-		throw new Error('File not found!');
-	}
-
-	let folder = await googleDriveService.searchFolder(folderName).catch((error) => {
-		console.error(error);
-		return null;
-	});
-
-	if (!folder) {
-		folder = await googleDriveService.createFolder(folderName);
-	}
-
-	await googleDriveService.saveFile('SpaceX', finalPath, 'image/jpg', folder.id).catch((error) => {
-		console.error(error);
-	});
-
-	console.info('File uploaded successfully!');
-
-	// Delete the file on the server
-	fs.unlinkSync(finalPath);
-
-}
-
-
 app.post("/login", async (req, res) => {
 	try {
 		console.log("trynna log in")
@@ -149,6 +119,35 @@ app.post('/register', async (req, res) => {
 	}
 })
 
+app.post('/addTeamMembers', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const {teamName, teamID, playersInformation} = req.body;
+		const collection = db.collection('TeamMembers');
+		collection.find({ teamName: teamName }).toArray().then(async (result) => {
+			if (result && result.length > 0) {
+				res.status(200).json({ message: "Team already exists", type: "Failed" });
+			} else {
+				const result = await collection.insertOne({
+					teamName: teamName,
+					teamID: teamID,
+					teamMembers: playersInformation
+				}).catch((error) => {
+					console.error(error)
+					res.status(500).json({ message: "Failed to Add Team Players", type: "Failure" })
+				})
+				console.log(result.insertedId)
+				res.status(200).json({ message: "User registered successfully", type: "Success", docID: result.insertedId });
+			}
+		}).catch((error) => {
+			console.error(error);
+			res.status(500).json({ message: 'Internal Server Error' });
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
 
 
 app.listen(port, () => {
