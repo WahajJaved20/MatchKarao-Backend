@@ -312,6 +312,7 @@ app.post('/acceptPlayRequest', async (req, res) => {
 		const results = await collection.insertOne({
 			type: "2",
 			teamOneID: notification.teamOneID,
+			teamTwoID: notification.teamTwoID,
 			teamName: teamOne["teamName"],
 			venue: notification.venue,
 			price: notification.price,
