@@ -232,7 +232,7 @@ app.post('/askToPlay', async (req, res) => {
 		const db = client.db("MatchKarao")
 		const { price, teamOneID, teamTwoID, location, date, startTime, endTime, venue, ticketID } = req.body;
 
-		const collection = db.collection("Full Booking");
+		const collection = db.collection("Notification");
 		await collection.insertOne({
 			teamOneID: teamOneID,
 			teamTwoID: teamTwoID,
@@ -242,9 +242,10 @@ app.post('/askToPlay', async (req, res) => {
 			location: location,
 			startTime: startTime,
 			endTime: endTime,
+			ticketID: ticketID
 		}).catch((error) => {
 			console.error(error)
-			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
+			res.status(500).json({ message: "Failed to Send Notification", type: "Failure" })
 		})
 		const halfBookingCollection = db.collection("Half Booking");
 		await halfBookingCollection.deleteOne({_id: new ObjectId(ticketID)}).catch((error)=>{
@@ -252,6 +253,19 @@ app.post('/askToPlay', async (req, res) => {
 			res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
 		})
 		res.status(200).json({ message: "Booking successfully Created", type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
+app.post('/getNotifications', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { teamID } = req.body;
+
+		const collection = db.collection("Notification");
+		const results = await collection.find({teamOneID: new ObjectId(teamID)}).toArray();
+		res.status(200).json({ notifications: results, type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
