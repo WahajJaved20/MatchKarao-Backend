@@ -247,11 +247,11 @@ app.post('/askToPlay', async (req, res) => {
 			console.error(error)
 			res.status(500).json({ message: "Failed to Send Notification", type: "Failure" })
 		})
-		const halfBookingCollection = db.collection("Half Booking");
-		await halfBookingCollection.deleteOne({_id: new ObjectId(ticketID)}).catch((error)=>{
-			console.error(error);
-			res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
-		})
+		// const halfBookingCollection = db.collection("Half Booking");
+		// await halfBookingCollection.deleteOne({_id: new ObjectId(ticketID)}).catch((error)=>{
+		// 	console.error(error);
+		// 	res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
+		// })
 		res.status(200).json({ message: "Booking successfully Created", type: "Success" });
 	} catch (error) {
 		console.error(error);
@@ -262,10 +262,22 @@ app.post('/getNotifications', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
 		const { teamID } = req.body;
-
 		const collection = db.collection("Notification");
 		const results = await collection.find({teamOneID: new ObjectId(teamID)}).toArray();
 		res.status(200).json({ notifications: results, type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
+app.post('/getNotificationsExist', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { teamID } = req.body;
+		const collection = db.collection("Notification");
+		console.log(teamID);
+		const results = await collection.find({teamOneID: teamID}).toArray();
+		res.status(200).json({ notifications: results.length != 0, type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
