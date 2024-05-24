@@ -234,6 +234,7 @@ app.post('/askToPlay', async (req, res) => {
 
 		const collection = db.collection("Notification");
 		await collection.insertOne({
+			type: "1",
 			teamOneID: teamOneID,
 			teamTwoID: teamTwoID,
 			venue: venue,
@@ -263,7 +264,15 @@ app.post('/getNotifications', async (req, res) => {
 		const db = client.db("MatchKarao")
 		const { teamID } = req.body;
 		const collection = db.collection("Notification");
-		const results = await collection.find({teamOneID: new ObjectId(teamID)}).toArray();
+		const results = await collection.find({teamOneID: teamID}).toArray();
+		const credentials = db.collection("Credentials")
+			for (var i = 0; i < results.length; i++) {
+				const objectId = new ObjectId(results[i].teamTwoID);
+				const query = { _id: objectId };
+				const bruh = await credentials.findOne(query);
+				results[i]["teamName"] = bruh["teamName"]
+			}
+		console.log(results)
 		res.status(200).json({ notifications: results, type: "Success" });
 	} catch (error) {
 		console.error(error);
@@ -278,6 +287,32 @@ app.post('/getNotificationsExist', async (req, res) => {
 		console.log(teamID);
 		const results = await collection.find({teamOneID: teamID}).toArray();
 		res.status(200).json({ notifications: results.length != 0, type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
+app.post('/acceptPlayRequest', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { notification } = req.body;
+		const collection = db.collection("Notification");
+		const creds = db.collection("Credentials");
+		const teamOne = await creds.findOne({_id: new ObjectId(notification.teamOneID)})
+		const results = await collection.insertOne({
+			type: "2",
+			teamOneID: notification.teamOneID,
+			teamName: teamOne["teamName"],
+			venue: notification.venue,
+			price: notification.price,
+			date: notification.date,
+			location: notification.location,
+			startTime: notification.startTime,
+			endTime: notification.endTime,
+		})
+		await collection.deleteMany({ticketID: notification.ticketID});
+
+		res.status(200).json({ result: results, type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
