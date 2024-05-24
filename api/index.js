@@ -22,7 +22,7 @@ const port = 5000;
 app.use(cors())
 app.use(bodyParser.json());
 
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 
 // Replace the uri string with your connection string.
 const uri = process.env.MONGODB_URI;
@@ -44,7 +44,7 @@ app.post("/login", async (req, res) => {
 			if (result[0].teamName == teamName && result[0].password == md5Hash) {
 				const token = jwt.sign({ userId: teamName }, secretKey, { expiresIn: '1h' });
 				console.log("Returning success status")
-				res.status(200).json({ message: token, type: "Success" , teamID: result[0]._id});
+				res.status(200).json({ message: token, type: "Success", teamID: result[0]._id });
 				console.log("mubarak")
 			} else {
 				res.status(200).json({ message: "Invalid username or password. Please try again.", type: "Failed" })
@@ -117,7 +117,7 @@ app.post('/register', async (req, res) => {
 app.post('/addTeamMembers', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
-		const {teamName, teamID, playersInformation} = req.body;
+		const { teamName, teamID, playersInformation } = req.body;
 		const collection = db.collection('TeamMembers');
 		collection.find({ teamName: teamName }).toArray().then(async (result) => {
 			if (result && result.length > 0) {
@@ -146,7 +146,7 @@ app.post('/addTeamMembers', async (req, res) => {
 app.post('/createNewBooking', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
-		const {bookingType, teamID, location, date, startTime, endTime, price} = req.body;
+		const { bookingType, teamID, location, date, startTime, endTime, price, venue } = req.body;
 
 		const collection = db.collection(bookingType);
 		await collection.insertOne({
@@ -156,18 +156,77 @@ app.post('/createNewBooking', async (req, res) => {
 			date: date,
 			startTime: startTime,
 			endTime: endTime,
-			price: price
+			price: price,
+			venue: venue
 		}).catch((error) => {
 			console.error(error)
 			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
 		})
-		res.status(200).json({ message: "Booking successfully Created", type: "Success"});
+		res.status(200).json({ message: "Booking successfully Created", type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
 	}
 })
+app.get('/getHalfBookings', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const collection = db.collection('Half Booking');
+		collection.find().toArray().then(async (result) => {
+			const credentials = db.collection("Credentials")
+			for (var i = 0; i < result.length; i++) {
+				const objectId = new ObjectId(result[i].teamID);
+				const query = { _id: objectId };
+				const bruh = await credentials.findOne(query);
+				result[i]["image"] = bruh["image"]
+				result[i]["teamName"] = bruh["teamName"]
+			}
+			res.status(200).json({ type: "Success", result: result })
+		}).catch((error) => {
+			console.error(error);
+			res.status(500).json({ message: 'Internal Server Error' });
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+});
 
+app.post('/filterBookings', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { location, date, startTime, endTime } = req.body;
+
+		const collection = db.collection("Half Booking");
+		const query = {};
+
+		if (location) {
+			query.location = location;
+		}
+		if (date) {
+			query.date = date;
+		}
+		if (startTime) {
+			query.startTime = { $gte: startTime };
+		}
+		if (endTime) {
+			query.endTime = { $lte: endTime };
+		}
+		const results = await collection.find(query).toArray();
+		const credentials = db.collection("Credentials")
+			for (var i = 0; i < results.length; i++) {
+				const objectId = new ObjectId(results[i].teamID);
+				const query = { _id: objectId };
+				const bruh = await credentials.findOne(query);
+				results[i]["image"] = bruh["image"]
+				results[i]["teamName"] = bruh["teamName"]
+			}
+		res.status(200).json({ results: results, type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
 });
