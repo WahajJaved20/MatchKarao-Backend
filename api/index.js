@@ -31,7 +31,7 @@ const client = new MongoClient(uri);
 
 app.post("/login", async (req, res) => {
 	try {
-		
+
 		const { teamName, password } = req.body;
 		const db = client.db("MatchKarao")
 		const collection = db.collection('Credentials');
@@ -43,9 +43,9 @@ app.post("/login", async (req, res) => {
 			}
 			if (result[0].teamName == teamName && result[0].password == md5Hash) {
 				const token = jwt.sign({ userId: teamName }, secretKey, { expiresIn: '1h' });
-				
+
 				res.status(200).json({ message: token, type: "Success", teamID: result[0]._id });
-				
+
 			} else {
 				res.status(200).json({ message: "Invalid username or password. Please try again.", type: "Failed" })
 			}
@@ -101,7 +101,7 @@ app.post('/register', async (req, res) => {
 					console.error(error)
 					res.status(500).json({ message: "Failed to Add user", type: "Failure" })
 				})
-				
+
 				res.status(200).json({ message: "User registered successfully", type: "Success", docID: result.insertedId });
 			}
 		}).catch((error) => {
@@ -131,7 +131,7 @@ app.post('/addTeamMembers', async (req, res) => {
 					console.error(error)
 					res.status(500).json({ message: "Failed to Add Team Players", type: "Failure" })
 				})
-				
+
 				res.status(200).json({ message: "User registered successfully", type: "Success", docID: result.insertedId });
 			}
 		}).catch((error) => {
@@ -214,13 +214,13 @@ app.post('/filterBookings', async (req, res) => {
 		}
 		const results = await collection.find(query).toArray();
 		const credentials = db.collection("Credentials")
-			for (var i = 0; i < results.length; i++) {
-				const objectId = new ObjectId(results[i].teamID);
-				const query = { _id: objectId };
-				const bruh = await credentials.findOne(query);
-				results[i]["image"] = bruh["image"]
-				results[i]["teamName"] = bruh["teamName"]
-			}
+		for (var i = 0; i < results.length; i++) {
+			const objectId = new ObjectId(results[i].teamID);
+			const query = { _id: objectId };
+			const bruh = await credentials.findOne(query);
+			results[i]["image"] = bruh["image"]
+			results[i]["teamName"] = bruh["teamName"]
+		}
 		res.status(200).json({ results: results, type: "Success" });
 	} catch (error) {
 		console.error(error);
@@ -248,7 +248,7 @@ app.post('/askToPlay', async (req, res) => {
 			console.error(error)
 			res.status(500).json({ message: "Failed to Send Notification", type: "Failure" })
 		})
-		
+
 		res.status(200).json({ message: "Booking successfully Created", type: "Success" });
 	} catch (error) {
 		console.error(error);
@@ -260,17 +260,28 @@ app.post('/getNotifications', async (req, res) => {
 		const db = client.db("MatchKarao")
 		const { teamID } = req.body;
 		const collection = db.collection("Notification");
-		const results = await collection.find({teamOneID: teamID}).toArray();
+		const results = await collection.find({ teamOneID: teamID, "type": "1" }).toArray();
+		const resultsTwo = await collection.find({ teamTwoID: teamID, "type": "2" }).toArray();
 		const credentials = db.collection("Credentials")
-			for (var i = 0; i < results.length; i++) {
-				const objectId = new ObjectId(results[i].teamTwoID);
-				const query = { _id: objectId };
-				const bruh = await credentials.findOne(query);
-				if(bruh)
+		var finalResults = [];
+		for (var i = 0; i < results.length; i++) {
+			const objectId = new ObjectId(results[i].teamTwoID);
+			const query = { _id: objectId };
+			const bruh = await credentials.findOne(query);
+			if (bruh)
 				results[i]["teamName"] = bruh["teamName"]
-			}
-		
-		res.status(200).json({ notifications: results, type: "Success" });
+			finalResults.push(results[i]);
+		}
+		for (var i = 0; i < resultsTwo.length; i++) {
+			const objectId = new ObjectId(resultsTwo[i].teamOneID);
+			const query = { _id: objectId };
+			const bruh = await credentials.findOne(query);
+			if (bruh)
+				resultsTwo[i]["teamName"] = bruh["teamName"]
+			finalResults.push(resultsTwo[i]);
+		}
+
+		res.status(200).json({ notifications: finalResults, type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
@@ -282,7 +293,7 @@ app.post('/getNotificationsExist', async (req, res) => {
 		const { teamID } = req.body;
 		const collection = db.collection("Notification");
 		;
-		const results = await collection.find({teamOneID: teamID}).toArray();
+		const results = await collection.find({ teamOneID: teamID }).toArray();
 		res.status(200).json({ notifications: results.length != 0, type: "Success" });
 	} catch (error) {
 		console.error(error);
@@ -292,12 +303,12 @@ app.post('/getNotificationsExist', async (req, res) => {
 app.post('/acceptPlayRequest', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
-		
+
 		const { notification } = req.body;
 		const collection = db.collection("Notification");
 		const creds = db.collection("Credentials");
-		const teamOne = await creds.findOne({_id: new ObjectId(notification.teamOneID)})
-		await collection.deleteMany({ticketID: notification.ticketID});
+		const teamOne = await creds.findOne({ _id: new ObjectId(notification.teamOneID) })
+		await collection.deleteMany({ ticketID: notification.ticketID });
 		const results = await collection.insertOne({
 			type: "2",
 			teamOneID: notification.teamOneID,
@@ -310,7 +321,7 @@ app.post('/acceptPlayRequest', async (req, res) => {
 			endTime: notification.endTime,
 		})
 		const halfBookingCollection = db.collection("Half Booking");
-		await halfBookingCollection.deleteOne({_id: new ObjectId(notification.ticketID)}).catch((error)=>{
+		await halfBookingCollection.deleteOne({ _id: new ObjectId(notification.ticketID) }).catch((error) => {
 			console.error(error);
 			res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
 		})
@@ -326,8 +337,8 @@ app.post('/removePlayRequest', async (req, res) => {
 		const db = client.db("MatchKarao")
 		const { id } = req.body;
 		const collection = db.collection("Notification");
-		await collection.deleteOne({_id: new ObjectId(id)});
-		res.status(200).json({type: "Success" });
+		await collection.deleteOne({ _id: new ObjectId(id) });
+		res.status(200).json({ type: "Success" });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
