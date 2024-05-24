@@ -227,6 +227,36 @@ app.post('/filterBookings', async (req, res) => {
 		res.status(500).json({ message: 'Internal Server Error' });
 	}
 })
+app.post('/askToPlay', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { price, teamOneID, teamTwoID, location, date, startTime, endTime, venue, ticketID } = req.body;
+
+		const collection = db.collection("Full Booking");
+		await collection.insertOne({
+			teamOneID: teamOneID,
+			teamTwoID: teamTwoID,
+			venue: venue,
+			price: price,
+			date: date,
+			location: location,
+			startTime: startTime,
+			endTime: endTime,
+		}).catch((error) => {
+			console.error(error)
+			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
+		})
+		const halfBookingCollection = db.collection("Half Booking");
+		await halfBookingCollection.deleteOne({_id: new ObjectId(ticketID)}).catch((error)=>{
+			console.error(error);
+			res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
+		})
+		res.status(200).json({ message: "Booking successfully Created", type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
 });
