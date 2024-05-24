@@ -338,7 +338,7 @@ app.post('/removePlayRequest', async (req, res) => {
 		const db = client.db("MatchKarao")
 		const { id } = req.body;
 		const collection = db.collection("Notification");
-		await collection.deleteOne({ _id: new ObjectId(id) });
+		await collection.deleteMany({ _id: new ObjectId(id) });
 		res.status(200).json({ type: "Success" });
 	} catch (error) {
 		console.error(error);
