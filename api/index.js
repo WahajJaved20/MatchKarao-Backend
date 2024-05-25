@@ -199,7 +199,29 @@ app.get('/getHalfBookings', async (req, res) => {
 		res.status(500).json({ message: 'Internal Server Error' });
 	}
 });
-
+app.get('/getFullBookings', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const collection = db.collection('Full Booking');
+		collection.find().toArray().then(async (result) => {
+			const credentials = db.collection("Credentials")
+			for (var i = 0; i < result.length; i++) {
+				const objectId = new ObjectId(result[i].teamID);
+				const query = { _id: objectId };
+				const bruh = await credentials.findOne(query);
+				result[i]["image"] = bruh["image"]
+				result[i]["teamName"] = bruh["teamName"]
+			}
+			res.status(200).json({ type: "Success", result: result })
+		}).catch((error) => {
+			console.error(error);
+			res.status(500).json({ message: 'Internal Server Error' });
+		});
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+});
 app.post('/filterBookings', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
