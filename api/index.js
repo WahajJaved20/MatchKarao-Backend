@@ -4,7 +4,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const jwt = require("jsonwebtoken");
-const GoogleDriveService = require('./googleDriveService.js');
 const path = require("path")
 const fs = require("fs")
 const crypto = require("crypto")
@@ -15,16 +14,11 @@ dotenv.config({ path: '../.env' });
 const app = express();
 const port = 5000;
 
-// app.use(cors({
-// 	origin: 'https://match-karao.vercel.app'
-// }));
-
 app.use(cors())
 app.use(bodyParser.json());
 
 const { MongoClient, ObjectId } = require("mongodb");
 
-// Replace the uri string with your connection string.
 const uri = process.env.MONGODB_URI;
 
 const client = new MongoClient(uri);
