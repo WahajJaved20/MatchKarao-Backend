@@ -117,7 +117,13 @@ app.post('/addTeamMembers', async (req, res) => {
 		const collection = db.collection('TeamMembers');
 		collection.find({ teamName: teamName }).toArray().then(async (result) => {
 			if (result && result.length > 0) {
-				res.status(200).json({ message: "Team already exists", type: "Failed" });
+				console.log("updating")
+				const current = await collection.findOne({teamName: teamName});
+				var memberList = current["teamMembers"]
+				memberList.push(playersInformation[0])
+				await collection.updateOne({teamName:teamName}, {$set: {teamMembers: memberList}});
+				res.status(200).json({ message: "User registered successfully", type: "Success"});
+
 			} else {
 				const result = await collection.insertOne({
 					teamName: teamName,
