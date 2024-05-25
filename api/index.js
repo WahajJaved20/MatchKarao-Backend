@@ -84,7 +84,7 @@ app.post('/register', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
 		const formData = req.body;
-		const { teamName, password, confirmPassword, location, image } = formData;
+		const { teamName, password, confirmPassword, location, image, feetLiking, position } = formData;
 		const collection = db.collection('Credentials');
 		const md5Hash = crypto.createHash('md5').update(password).digest('hex');
 		collection.find({ teamName: teamName }).toArray().then(async (result) => {
@@ -96,7 +96,9 @@ app.post('/register', async (req, res) => {
 					password: md5Hash,
 					confirmPassword: confirmPassword,
 					location: location,
-					image: image
+					image: image,
+					feetLiking: feetLiking,
+					position: position
 				}).catch((error) => {
 					console.error(error)
 					res.status(500).json({ message: "Failed to Add user", type: "Failure" })
@@ -380,6 +382,18 @@ app.post('/removePlayRequest', async (req, res) => {
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
+app.post('/getTeamMembers', async (req,res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const {id} = req.body
+		const collection = db.collection("TeamMembers")
+		const result = await collection.find({teamID: id}).toArray();
+		res.status(200).json({ type: "Success" , result: result});
+	} catch (error) {
+		console.log(error)
+		res.status(500).json({message:"Internal server error"})
 	}
 })
 app.listen(port, () => {
