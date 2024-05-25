@@ -158,7 +158,7 @@ app.post('/createNewBooking', async (req, res) => {
 			endTime: endTime,
 			price: price,
 			venue: venue,
-			bookingConfirmation: false
+			bookingConfirmation: "false"
 		}).catch((error) => {
 			console.error(error)
 			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
@@ -338,7 +338,7 @@ app.post('/acceptPlayRequest', async (req, res) => {
 		})
 		const halfBookingCollection = db.collection("Half Booking");
 		await halfBookingCollection.updateOne({ _id: new ObjectId(notification.ticketID) },
-			{ $set: { teamTwoID: notification.teamTwoID, bookingConfirmation: true  } }).catch((error) => {
+			{ $set: { teamTwoID: notification.teamTwoID, bookingConfirmation: "true"  } }).catch((error) => {
 				console.error(error);
 				res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
 			})
