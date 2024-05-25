@@ -157,7 +157,8 @@ app.post('/createNewBooking', async (req, res) => {
 			startTime: startTime,
 			endTime: endTime,
 			price: price,
-			venue: venue
+			venue: venue,
+			bookingConfirmation: false
 		}).catch((error) => {
 			console.error(error)
 			res.status(500).json({ message: "Failed to Create Booking", type: "Failure" })
@@ -180,6 +181,13 @@ app.get('/getHalfBookings', async (req, res) => {
 				const bruh = await credentials.findOne(query);
 				result[i]["image"] = bruh["image"]
 				result[i]["teamName"] = bruh["teamName"]
+				if("teamTwoID" in result[i]){
+					const objectId = new ObjectId(result[i].teamTwoID);
+					const query = { _id: objectId };
+					const lol = await credentials.findOne(query);
+					result[i]["teamTwoImage"] =  lol["image"]
+					result[i]["teamTwoName"] = lol["teamName"]
+				}
 			}
 			res.status(200).json({ type: "Success", result: result })
 		}).catch((error) => {
@@ -220,6 +228,13 @@ app.post('/filterBookings', async (req, res) => {
 			const bruh = await credentials.findOne(query);
 			results[i]["image"] = bruh["image"]
 			results[i]["teamName"] = bruh["teamName"]
+			if("teamTwoID" in results[i]){
+				const objectId = new ObjectId(results[i].teamTwoID);
+				const query = { _id: objectId };
+				const lol = await credentials.findOne(query);
+				results[i]["teamTwoImage"] =  lol["image"]
+				results[i]["teamTwoName"] = lol["teamName"]
+			}
 		}
 		res.status(200).json({ results: results, type: "Success" });
 	} catch (error) {
@@ -322,11 +337,11 @@ app.post('/acceptPlayRequest', async (req, res) => {
 			endTime: notification.endTime,
 		})
 		const halfBookingCollection = db.collection("Half Booking");
-		await halfBookingCollection.deleteOne({ _id: new ObjectId(notification.ticketID) }).catch((error) => {
-			console.error(error);
-			res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
-		})
-
+		await halfBookingCollection.updateOne({ _id: new ObjectId(notification.ticketID) },
+			{ $set: { teamTwoID: notification.teamTwoID, bookingConfirmation: true  } }).catch((error) => {
+				console.error(error);
+				res.status(500).json({ message: "Failed to Delete Old Booking", type: "Failure" })
+			})
 		res.status(200).json({ result: results, type: "Success" });
 	} catch (error) {
 		console.error(error);
