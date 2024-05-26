@@ -171,6 +171,18 @@ app.post('/createNewBooking', async (req, res) => {
 		res.status(500).json({ message: 'Internal Server Error' });
 	}
 })
+app.post('/deleteBooking', async (req, res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const { bookingType, ticketID } = req.body;
+		const collection = db.collection(bookingType);
+		await collection.deleteOne({_id: new ObjectId(ticketID)});
+		res.status(200).json({ message: "Booking successfully Deleted", type: "Success" });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+})
 app.get('/getHalfBookings', async (req, res) => {
 	try {
 		const db = client.db("MatchKarao")
