@@ -396,6 +396,28 @@ app.post('/getTeamMembers', async (req,res) => {
 		res.status(500).json({message:"Internal server error"})
 	}
 })
+app.post('/getAvailaibleTimes', async (req,res) => {
+	try {
+		const db = client.db("MatchKarao")
+		const {date} = req.body
+		console.log(date)
+		const collection = db.collection("Half Booking")
+		const result = await collection.find({date: date}).toArray();
+		var times = []
+		for(var i=0; i< result.length; i++){
+			times.push({"startTime": result[i].startTime, "endTime": result[i].endTime});
+		}
+		const collection2 = db.collection("Full Booking");
+		const result2 = await collection2.find({date: date}).toArray();
+		for(var i=0; i< result2.length; i++){
+			times.push({"startTime": result2[i].startTime, "endTime": result2[i].endTime});
+		}
+		res.status(200).json({ type: "Success" , result: times});
+	} catch (error) {
+		console.log(error)
+		res.status(500).json({message:"Internal server error"})
+	}
+})
 app.listen(port, () => {
 	console.log(`App listening on port ${port}`);
 });
